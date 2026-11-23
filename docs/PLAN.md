@@ -6,7 +6,8 @@ The sleep rules behind it are in [LOGIC.md](LOGIC.md).
 ## Where things stand
 
 - First commit is in: domain, Hive storage, plan engine, twin merger, learner, Today screen, unit tests.
-- **Nothing has been compiled or run yet.** The code was written without a Flutter SDK.
+- **Phase 0 done** (branch `phase-0-first-run`): compiles on Flutter stable 3.41.9, analyze clean, runs on an Android emulator.
+- **Phase 1 built** (branch `phase-1-daily-use`): edit and delete, "woke up at…", settings, night view. Checked on the emulator; not yet used by the family for a full day, which is the done criterion.
 - The rules and the expected values in the engine tests were checked against a second implementation of the same rules.
 
 ## Phase 0: first compile and run

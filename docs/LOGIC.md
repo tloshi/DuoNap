@@ -44,14 +44,14 @@ To test the last line: compare the daily nap target on the morning after a long 
 
 ## 4. Rules DuoNap implements
 
-Code: `lib/service/duonap_plan_engine.dart`. Numbers: `DuoNapSleepProfile.starter`.
+Code: `lib/service/duonap_plan_engine.dart`. Numbers: `DuoNapSleepProfile.starter`, except the usual wake time and the planned bedtime, which come from the family settings (`DuoNapSettings`, defaults 08:00 and 21:15).
 
-1. **The morning wake-up starts the day.** Until it is logged, the usual wake time (08:00) is the anchor.
+1. **The morning wake-up starts the day.** Until it is logged, the usual wake time (settings, default 08:00) is the anchor.
 2. **Next nap = end of the previous sleep + the wake window for that nap position.** Starter windows: 1 h 45, 2 h 20, 2 h 15.
 3. **Expected nap length per position.** Starter: 1 h 30, 1 h 30, 30 min. A running nap is assumed to end at its usual length, or now if it has run over.
 4. **Daytime sleep is capped at 3 h 30.** A planned nap is shortened to fit, and dropped if less than 15 minutes is left.
 5. **No nap close to night.** A nap is not planned if it would start within 2 h 50 of the planned bedtime (min last window + 30 min).
-6. **Night = the planned bedtime (21:15), kept inside two limits:**
+6. **Night = the planned bedtime (settings, default 21:15), kept inside two limits:**
    - never sooner than last nap end + 2 h 20,
    - never later than last nap end + 4 h. This limit is ignored once that moment has passed.
 7. **An overdue nap keeps its planned time** and is flagged. The rest of the day is calculated as if it starts now.
@@ -77,9 +77,23 @@ Code: `lib/service/duonap_profile_learner.dart`.
 
 Code: `lib/service/duonap_sleep_service.dart`, `lib/service/duonap_day_history.dart`.
 
-- Sleep that starts within 60 minutes of the planned bedtime, or before 05:00, is **night**. Everything else is a **nap**.
-- The morning wake-up is the end of the last night sleep that ended between 05:00 and 14:00.
+- Sleep that starts within 60 minutes of the planned bedtime, or before 05:00, is **night**. Everything else is a **nap**. The bedtime is the one in settings. (Open question in section 7: the code counts every start from 60 minutes before bedtime until midnight as night.)
+- The morning wake-up is the latest end, between 05:00 and 14:00, of either a night sleep or a **wake-up logged by hand**.
+- A wake-up logged by hand is stored as its own session of kind `wake`, with start and end at the same moment. It is not sleep: it is never a nap, never night sleep, never overlaps anything, and is not counted in any sleep length.
 - A night that began at or after 14:00 belongs to that evening.
+- The night view is shown once tonight's night sleep is logged, and before 05:00.
+
+### Correcting the log
+
+Code: `lib/service/duonap_sleep_edit_service.dart`, `lib/service/duonap_sleep_edit_rules.dart`.
+
+- A logged sleep can be moved minute by minute, or deleted, for one baby or for both at once. "Both" is offered only when both babies have that sleep logged and both are either still asleep or both finished.
+- A correction is refused when a time is in the future, the end is not after the start, or a finished sleep would lose its end.
+- A sleep keeps its date, and its start stays in the hours of its kind: a nap from 05:00 on, night sleep from 14:00 on or before 05:00. Otherwise the day rules above would no longer find it where it was.
+- A correction may not overlap another sleep of the same baby.
+- **"Woke up at…"** sets the morning wake-up for one baby or both, between 05:00 and 14:00 and not in the future. If the wake-up already comes from a sleep, that sleep's end moves. If a night is still running, it ends then. Otherwise a hand wake-up is added. Nothing is saved unless it works for every chosen baby.
+- A hand wake-up can be deleted. A wake-up that is the end of a logged night cannot, because that would delete the night.
+- When a night is split by night wake-ups, the "Nata" row opens the first part only.
 
 ## 5. Where DuoNap differs on purpose
 
@@ -113,6 +127,7 @@ Code: `lib/service/duonap_sleep_service.dart`, `lib/service/duonap_day_history.d
 
 ## 7. Open questions
 
+- **Night or nap by the clock.** Section 4 says sleep starting "within 60 minutes of the planned bedtime" is night. The code counts any start from 60 minutes before bedtime until midnight as night, so a sleep at 23:34 is night. Decide which is meant, then align this file or the code.
 - **The babies' exact age.** The reference app showed 5 months 30 days on 3 Nov. The starter numbers come from the log, not from an age table, so the plan works either way, but an age table is needed for new users.
 - **The 2 h 20 minimum last window** rests on one observation. Check it against a week of DuoNap data.
 - **The daily nap target hypothesis** in section 3 is unconfirmed.
