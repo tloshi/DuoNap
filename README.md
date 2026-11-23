@@ -50,6 +50,12 @@ UI  <->  ViewModel  <->  Service  <->  Repository
 
 State is plain Riverpod `Notifier` with hand-written state classes, so there is no code generation step. Moving to `riverpod_generator` + `freezed` is a mechanical change once `build_runner` is part of the workflow.
 
+## Docs
+
+- [docs/LOGIC.md](docs/LOGIC.md): the sleep rules, the evidence behind them, open questions.
+- [docs/PLAN.md](docs/PLAN.md): build phases, data model for sync, design tokens.
+- [CLAUDE.md](CLAUDE.md): conventions for working on this repo with Claude Code.
+
 ## Not built yet
 
 - Shift plan toward an earlier bedtime (15 minutes every few days).

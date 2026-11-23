@@ -8,35 +8,36 @@
     "fonts": "google_fonts (Sora)"
   },
   "architecture": "UI <-> ViewModel <-> Service <-> Repository. DTOs only in lib/data. Class prefix: DuoNap.",
+  "docs": {
+    "logic": "docs/LOGIC.md",
+    "plan": "docs/PLAN.md",
+    "agent_instructions": "CLAUDE.md"
+  },
+  "current_phase": "Phase 0: first compile and run",
   "recent_changes": [
+    "Added docs/LOGIC.md (sleep rules, evidence, open questions), docs/PLAN.md (phases, data model, design tokens) and CLAUDE.md.",
     "Initial project: domain models, Hive repository, plan engine, twin plan merger, profile learner, sleep service.",
     "Today screen in the D design direction: twin ring, day plan card, three action buttons.",
     "Unit tests for the plan engine, profile learner, twin merger and formatters."
   ],
   "current_tasks": [
-    "First compile and run on a device (code was written without a Flutter SDK).",
-    "Shift plan toward an earlier bedtime.",
-    "Earlier bedtime after a short night.",
-    "Edit and delete a logged sleep.",
-    "Firestore sync between two phones.",
-    "Notifications before the next nap.",
-    "Settings: baby names, planned bedtime, language."
+    "Phase 0: flutter create, pub get, analyze, test, run. The Dart code has never been compiled.",
+    "Phase 1: edit and delete a logged sleep, log the first morning by hand, settings, night view.",
+    "Phase 2: shift plan toward 19:00-07:00, earlier night after a short night.",
+    "Phase 3: Firestore sync between two phones.",
+    "Phase 4: notifications. Phase 5: history. Phase 6: optional AI logging and weekly summary."
   ],
   "files_affected": [
-    "pubspec.yaml",
-    "analysis_options.yaml",
-    "README.md",
-    "lib/main.dart",
-    "lib/app/",
-    "lib/core/",
-    "lib/domain/",
-    "lib/data/",
-    "lib/service/",
-    "lib/ui/today/",
-    "test/"
+    "CLAUDE.md",
+    "docs/LOGIC.md",
+    "docs/PLAN.md",
+    "docs/project_state.json",
+    "README.md"
   ],
   "open_decisions": [
     "Planned bedtime and usual wake time are constants in DuoNapSleepProfile.starter until there is a settings screen.",
-    "Night vs nap is decided by the clock when sleep starts: within 60 minutes of the planned bedtime, or before 05:00, counts as night."
+    "Night vs nap is decided by the clock when sleep starts: within 60 minutes of the planned bedtime, or before 05:00, counts as night.",
+    "Babies' exact age is unconfirmed; needed only for an age table for new users.",
+    "The 2 h 20 min minimum last wake window rests on one observation."
   ]
 }
