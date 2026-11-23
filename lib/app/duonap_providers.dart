@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/duonap_settings_repository.dart';
+import '../data/duonap_shift_repository.dart';
 import '../data/duonap_sleep_repository.dart';
 import '../service/duonap_settings_service.dart';
+import '../service/duonap_shift_service.dart';
 import '../service/duonap_sleep_edit_service.dart';
 import '../service/duonap_sleep_service.dart';
 
@@ -16,10 +18,24 @@ final duoNapSettingsRepositoryProvider = Provider<DuoNapSettingsRepository>((ref
   throw UnimplementedError('duoNapSettingsRepositoryProvider is not overridden.');
 });
 
+/// Overridden in `main()` once the Hive box is open.
+final duoNapShiftRepositoryProvider = Provider<DuoNapShiftRepository>((ref) {
+  throw UnimplementedError('duoNapShiftRepositoryProvider is not overridden.');
+});
+
 final duoNapSleepServiceProvider = Provider<DuoNapSleepService>((ref) {
   return DuoNapSleepService(
     repository: ref.watch(duoNapSleepRepositoryProvider),
     settings: ref.watch(duoNapSettingsRepositoryProvider),
+    shift: ref.watch(duoNapShiftRepositoryProvider),
+  );
+});
+
+final duoNapShiftServiceProvider = Provider<DuoNapShiftService>((ref) {
+  return DuoNapShiftService(
+    shift: ref.watch(duoNapShiftRepositoryProvider),
+    settings: ref.watch(duoNapSettingsRepositoryProvider),
+    sleep: ref.watch(duoNapSleepRepositoryProvider),
   );
 });
 

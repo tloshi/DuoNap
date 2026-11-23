@@ -1,3 +1,4 @@
+import 'duonap_anchors.dart';
 import 'duonap_baby.dart';
 
 /// What the family sets by hand: the babies' names and the two anchor times.
@@ -29,6 +30,13 @@ class DuoNapSettings {
 
   /// Minutes after midnight. Anchors the day until the wake-up is logged.
   final int usualWakeMinutes;
+
+  DuoNapAnchors get anchors {
+    return DuoNapAnchors(
+      wakeMinutes: usualWakeMinutes,
+      bedtimeMinutes: plannedBedtimeMinutes,
+    );
+  }
 
   List<DuoNapBaby> get babies => [baby(DuoNapBabyId.first), baby(DuoNapBabyId.second)];
 

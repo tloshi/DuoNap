@@ -1,3 +1,4 @@
+import 'duonap_anchors.dart';
 import 'duonap_settings.dart';
 
 /// The numbers the plan is built from. Starts from [starter] and is replaced
@@ -55,16 +56,17 @@ class DuoNapSleepProfile {
     plannedBedtimeMinutes: DuoNapSettings.defaultBedtimeMinutes,
   );
 
-  /// The same numbers, with the wake time and bedtime the family set.
-  DuoNapSleepProfile anchoredTo(DuoNapSettings settings) {
+  /// The same numbers, with the day's wake time and bedtime: from settings,
+  /// or from the shift plan while the path toward 19:00 – 07:00 runs.
+  DuoNapSleepProfile anchoredTo(DuoNapAnchors anchors) {
     return DuoNapSleepProfile(
       wakeWindows: wakeWindows,
       napLengths: napLengths,
       minLastWindow: minLastWindow,
       maxLastWindow: maxLastWindow,
       maxDaySleep: maxDaySleep,
-      usualWakeMinutes: settings.usualWakeMinutes,
-      plannedBedtimeMinutes: settings.plannedBedtimeMinutes,
+      usualWakeMinutes: anchors.wakeMinutes,
+      plannedBedtimeMinutes: anchors.bedtimeMinutes,
     );
   }
 

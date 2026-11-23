@@ -27,6 +27,9 @@ class DuoNapColors {
   /// Unselected labels that still need to read clearly.
   static const Color soft = Color(0xFFC9CBE0);
 
+  /// Outlines and future steps, from the "D · Rruga 19–07" mockup.
+  static const Color outline = Color(0xFF5A5F96);
+
   /// Night view ground, darker than the day.
   static const Color night = Color(0xFF070812);
 

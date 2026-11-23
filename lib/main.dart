@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'app/duonap_app.dart';
 import 'app/duonap_providers.dart';
 import 'data/duonap_settings_repository.dart';
+import 'data/duonap_shift_repository.dart';
 import 'data/duonap_sleep_repository.dart';
 
 Future<void> main() async {
@@ -22,6 +23,9 @@ Future<void> main() async {
         ),
         duoNapSettingsRepositoryProvider.overrideWithValue(
           DuoNapHiveSettingsRepository(settingsBox),
+        ),
+        duoNapShiftRepositoryProvider.overrideWithValue(
+          DuoNapHiveShiftRepository(settingsBox),
         ),
       ],
       child: const DuoNapApp(),

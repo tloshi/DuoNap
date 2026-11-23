@@ -7,6 +7,7 @@ import '../../domain/duonap_plan_item.dart';
 import '../common/duonap_error_text.dart';
 import '../common/duonap_pill_button.dart';
 import '../common/duonap_round_button.dart';
+import '../common/duonap_sheet_frame.dart';
 import 'duonap_sleep_edit_state.dart';
 import 'duonap_sleep_edit_view_model.dart';
 import 'widgets/duonap_sleep_edit_parts.dart';
@@ -17,12 +18,7 @@ Future<void> showDuoNapSleepEditSheet(
   BuildContext context,
   List<DuoNapBaby> babies,
 ) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => DuoNapSleepEditSheet(babies: babies),
-  );
+  return showDuoNapSheet(context, DuoNapSleepEditSheet(babies: babies));
 }
 
 /// Bottom sheet to correct a logged sleep or log the morning wake-up,
@@ -37,46 +33,29 @@ class DuoNapSleepEditSheet extends ConsumerWidget {
     final state = ref.watch(duoNapSleepEditViewModelProvider);
     final viewModel = ref.read(duoNapSleepEditViewModelProvider.notifier);
     final error = state.error;
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        decoration: BoxDecoration(
-          color: DuoNapColors.sheet,
-          borderRadius: BorderRadius.circular(36),
-          border: Border.all(color: DuoNapColors.sheetBorder),
+    return DuoNapSheetFrame(
+      title: _title(state),
+      children: [
+        DuoNapTargetSelector(
+          babies: babies,
+          selected: state.target,
+          available: state.targets,
+          onSelect: viewModel.select,
         ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _Handle(),
-              const SizedBox(height: 18),
-              _Header(title: _title(state)),
-              const SizedBox(height: 18),
-              DuoNapTargetSelector(
-                babies: babies,
-                selected: state.target,
-                available: state.targets,
-                onSelect: viewModel.select,
-              ),
-              const SizedBox(height: 18),
-              DuoNapEditSummary(state: state),
-              const SizedBox(height: 18),
-              DuoNapEditTimes(
-                state: state,
-                onStart: viewModel.nudgeStart,
-                onEnd: viewModel.nudgeEnd,
-              ),
-              if (error != null) DuoNapErrorLine(message: error),
-              const SizedBox(height: 18),
-              _Actions(state: state, onSave: viewModel.save, onDelete: viewModel.delete),
-            ],
-          ),
+        DuoNapEditSummary(state: state),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DuoNapEditTimes(
+              state: state,
+              onStart: viewModel.nudgeStart,
+              onEnd: viewModel.nudgeEnd,
+            ),
+            if (error != null) DuoNapErrorLine(message: error),
+          ],
         ),
-      ),
+        _Actions(state: state, onSave: viewModel.save, onDelete: viewModel.delete),
+      ],
     );
   }
 
@@ -86,48 +65,6 @@ class DuoNapSleepEditSheet extends ConsumerWidget {
       DuoNapPlanKind.night => 'Gjumi i natës',
       _ => 'Gjumë ditor',
     };
-  }
-}
-
-class _Handle extends StatelessWidget {
-  const _Handle();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 44,
-        height: 5,
-        decoration: BoxDecoration(
-          color: DuoNapColors.handle,
-          borderRadius: BorderRadius.circular(3),
-        ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        DuoNapRoundButton(
-          icon: Icons.close_rounded,
-          label: 'Mbyll',
-          onTap: () => Navigator.of(context).pop(),
-        ),
-      ],
-    );
   }
 }
 

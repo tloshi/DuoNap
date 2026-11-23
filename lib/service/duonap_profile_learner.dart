@@ -1,5 +1,6 @@
 import '../domain/duonap_sleep_profile.dart';
 import '../domain/duonap_sleep_session.dart';
+import 'duonap_median.dart';
 
 /// One finished day for one baby: the morning wake-up and that day's naps in order.
 class DuoNapDayRecord {
@@ -52,11 +53,6 @@ class DuoNapProfileLearner {
   }
 
   Duration _medianOr(Duration fallback, List<Duration> samples) {
-    if (samples.length < _minSamples) return fallback;
-    final sorted = [...samples]..sort();
-    final middle = sorted.length ~/ 2;
-    if (sorted.length.isOdd) return sorted[middle];
-    final sum = sorted[middle - 1].inMicroseconds + sorted[middle].inMicroseconds;
-    return Duration(microseconds: sum ~/ 2);
+    return duoNapMedian(samples, _minSamples) ?? fallback;
   }
 }

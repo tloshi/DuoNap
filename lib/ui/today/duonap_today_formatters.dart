@@ -34,9 +34,37 @@ class DuoNapFormat {
   /// Minutes after midnight as a clock time: 1275 is "21:15".
   static String minutesOfDay(int minutes) => '${_two(minutes ~/ 60)}:${_two(minutes % 60)}';
 
+  /// Month names after a day number in "rreth 20 dhjetorit".
+  static const List<String> _monthsAfterDay = [
+    'janarit',
+    'shkurtit',
+    'marsit',
+    'prillit',
+    'majit',
+    'qershorit',
+    'korrikut',
+    'gushtit',
+    'shtatorit',
+    'tetorit',
+    'nëntorit',
+    'dhjetorit',
+  ];
+
   /// "e martë 3 nëntor".
   static String date(DateTime day) {
     return '${_weekdays[day.weekday - 1]} ${day.day} ${_months[day.month - 1]}';
+  }
+
+  /// "20 dhjetorit", for "mbërritja rreth 20 dhjetorit".
+  static String arrival(DateTime day) => '${day.day} ${_monthsAfterDay[day.month - 1]}';
+
+  /// "Sot, e hënë" for today, otherwise "E enjte, 26 nëntor".
+  static String stepDay(DateTime day, DateTime today) {
+    final weekday = _weekdays[day.weekday - 1];
+    final sameDay = day.year == today.year && day.month == today.month && day.day == today.day;
+    if (sameDay) return 'Sot, $weekday';
+    final capital = weekday[0].toUpperCase() + weekday.substring(1);
+    return '$capital, ${day.day} ${_months[day.month - 1]}';
   }
 
   static String duration(Duration value) {

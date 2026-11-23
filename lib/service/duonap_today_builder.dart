@@ -1,16 +1,35 @@
+import '../domain/duonap_anchors.dart';
 import '../domain/duonap_baby.dart';
 import '../domain/duonap_plan_item.dart';
 import '../domain/duonap_settings.dart';
+import '../domain/duonap_shift.dart';
 import '../domain/duonap_sleep_profile.dart';
 import '../domain/duonap_sleep_session.dart';
 import '../domain/duonap_today_snapshot.dart';
 import 'duonap_day_history.dart';
 import 'duonap_plan_engine.dart';
 import 'duonap_profile_learner.dart';
+import 'duonap_shift_plan.dart';
+import 'duonap_short_night.dart';
 import 'duonap_twin_plan_merger.dart';
 
-/// Builds what the Today screen shows from the log, the settings and the time.
-/// Pure: same input, same snapshot.
+/// Everything the plan is built from, loaded together for one moment.
+class DuoNapTodayInputs {
+  const DuoNapTodayInputs({
+    required this.sessions,
+    required this.settings,
+    this.shift,
+  });
+
+  final List<DuoNapSleepSession> sessions;
+  final DuoNapSettings settings;
+
+  /// The path toward 19:00 – 07:00, or null when none is running.
+  final DuoNapShiftSetup? shift;
+}
+
+/// Builds what the Today screen shows from the log, the settings, the path
+/// and the time. Pure: same input, same snapshot.
 class DuoNapTodayBuilder {
   const DuoNapTodayBuilder();
 
@@ -18,18 +37,16 @@ class DuoNapTodayBuilder {
   final DuoNapTwinPlanMerger _merger = const DuoNapTwinPlanMerger();
   final DuoNapProfileLearner _learner = const DuoNapProfileLearner();
   final DuoNapDayHistory _history = const DuoNapDayHistory();
+  final DuoNapShortNight _shortNight = const DuoNapShortNight();
 
-  DuoNapTodaySnapshot build(
-    List<DuoNapSleepSession> sessions,
-    DuoNapSettings settings,
-    DateTime now,
-  ) {
+  DuoNapTodaySnapshot build(DuoNapTodayInputs inputs, DateTime now) {
+    final anchors = anchorsOn(inputs, now);
     final statuses = <DuoNapBabyId, DuoNapBabyStatus>{};
     final babyPlans = <DuoNapBabyId, List<DuoNapPlanItem>>{};
     for (final baby in DuoNapBabyId.values) {
-      final own = sessions.where((s) => s.babyId == baby).toList();
+      final own = inputs.sessions.where((s) => s.babyId == baby).toList();
       statuses[baby] = _history.statusOf(own);
-      babyPlans[baby] = _planFor(own, settings, now);
+      babyPlans[baby] = _planFor(own, _babyAnchors(own, anchors, now), now);
     }
     final plan = _merger.merge(
       babyPlans[DuoNapBabyId.first] ?? const [],
@@ -37,21 +54,39 @@ class DuoNapTodayBuilder {
     );
     return DuoNapTodaySnapshot(
       now: now,
-      babies: settings.babies,
+      babies: inputs.settings.babies,
       statuses: statuses,
       plan: plan,
       babyPlans: babyPlans,
       isNight: _isNight(plan, now),
-      nextWake: _nextWake(settings, now),
+      nextWake: _nextWake(inputs, now),
     );
+  }
+
+  /// The shared wake-up and bedtime for [day]: from the path while it runs,
+  /// otherwise from settings.
+  DuoNapAnchors anchorsOn(DuoNapTodayInputs inputs, DateTime day) {
+    final shift = inputs.shift;
+    if (shift == null || day.isBefore(shift.startDay)) return inputs.settings.anchors;
+    return DuoNapShiftPlan.fromLog(shift, inputs.sessions).anchorsOn(day);
+  }
+
+  /// One baby's anchors: tonight moves earlier after that baby's short night.
+  DuoNapAnchors _babyAnchors(
+    List<DuoNapSleepSession> own,
+    DuoNapAnchors shared,
+    DateTime now,
+  ) {
+    final earlier = _shortNight.earlierBy(own, now).inMinutes;
+    return shared.withBedtime(shared.bedtimeMinutes - earlier);
   }
 
   List<DuoNapPlanItem> _planFor(
     List<DuoNapSleepSession> own,
-    DuoNapSettings settings,
+    DuoNapAnchors anchors,
     DateTime now,
   ) {
-    final base = DuoNapSleepProfile.starter.anchoredTo(settings);
+    final base = DuoNapSleepProfile.starter.anchoredTo(anchors);
     final profile = _learner.learn(base, _history.pastDays(own, now));
     final input = DuoNapPlanInput(
       now: now,
@@ -71,10 +106,11 @@ class DuoNapTodayBuilder {
     return last.kind == DuoNapPlanKind.night && last.status == DuoNapPlanStatus.done;
   }
 
-  DateTime _nextWake(DuoNapSettings settings, DateTime now) {
-    final minutes = settings.usualWakeMinutes;
-    final today = DateTime(now.year, now.month, now.day, 0, minutes);
+  DateTime _nextWake(DuoNapTodayInputs inputs, DateTime now) {
+    final todayWake = anchorsOn(inputs, now).wakeMinutes;
+    final today = DateTime(now.year, now.month, now.day, 0, todayWake);
     if (now.isBefore(today)) return today;
-    return DateTime(now.year, now.month, now.day + 1, 0, minutes);
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    return tomorrow.add(Duration(minutes: anchorsOn(inputs, tomorrow).wakeMinutes));
   }
 }
