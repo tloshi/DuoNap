@@ -1,0 +1,22 @@
+name: duonap
+description: Sleep plan for twins. One shared daily plan, one tap per baby.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

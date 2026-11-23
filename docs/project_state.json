@@ -1,0 +1,42 @@
+{
+  "project": "DuoNap",
+  "updated": "2026-11-23",
+  "stack": {
+    "framework": "Flutter",
+    "state": "flutter_riverpod (Notifier, no code generation)",
+    "storage": "Hive (JSON string per sleep session)",
+    "fonts": "google_fonts (Sora)"
+  },
+  "architecture": "UI <-> ViewModel <-> Service <-> Repository. DTOs only in lib/data. Class prefix: DuoNap.",
+  "recent_changes": [
+    "Initial project: domain models, Hive repository, plan engine, twin plan merger, profile learner, sleep service.",
+    "Today screen in the D design direction: twin ring, day plan card, three action buttons.",
+    "Unit tests for the plan engine, profile learner, twin merger and formatters."
+  ],
+  "current_tasks": [
+    "First compile and run on a device (code was written without a Flutter SDK).",
+    "Shift plan toward an earlier bedtime.",
+    "Earlier bedtime after a short night.",
+    "Edit and delete a logged sleep.",
+    "Firestore sync between two phones.",
+    "Notifications before the next nap.",
+    "Settings: baby names, planned bedtime, language."
+  ],
+  "files_affected": [
+    "pubspec.yaml",
+    "analysis_options.yaml",
+    "README.md",
+    "lib/main.dart",
+    "lib/app/",
+    "lib/core/",
+    "lib/domain/",
+    "lib/data/",
+    "lib/service/",
+    "lib/ui/today/",
+    "test/"
+  ],
+  "open_decisions": [
+    "Planned bedtime and usual wake time are constants in DuoNapSleepProfile.starter until there is a settings screen.",
+    "Night vs nap is decided by the clock when sleep starts: within 60 minutes of the planned bedtime, or before 05:00, counts as night."
+  ]
+}
