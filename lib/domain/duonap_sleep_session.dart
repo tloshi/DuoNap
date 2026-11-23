@@ -1,6 +1,8 @@
 import 'duonap_baby.dart';
 
-enum DuoNapSleepKind { nap, night }
+/// `wake` is a morning wake-up logged by hand when the night before it was not
+/// logged. Its start and end are the same moment.
+enum DuoNapSleepKind { nap, night, wake }
 
 /// One stretch of sleep for one baby. `end` is null while the baby is still asleep.
 class DuoNapSleepSession {
@@ -22,13 +24,16 @@ class DuoNapSleepSession {
 
   Duration durationAt(DateTime now) => (end ?? now).difference(start);
 
-  DuoNapSleepSession ended(DateTime at) {
+  DuoNapSleepSession ended(DateTime at) => retimed(start, at);
+
+  /// Same session, new times. A null [newEnd] means the baby is still asleep.
+  DuoNapSleepSession retimed(DateTime newStart, DateTime? newEnd) {
     return DuoNapSleepSession(
       id: id,
       babyId: babyId,
       kind: kind,
-      start: start,
-      end: at,
+      start: newStart,
+      end: newEnd,
     );
   }
 }

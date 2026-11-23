@@ -1,3 +1,5 @@
+import 'duonap_settings.dart';
+
 /// The numbers the plan is built from. Starts from [starter] and is replaced
 /// by learned values once enough days are logged.
 class DuoNapSleepProfile {
@@ -49,9 +51,22 @@ class DuoNapSleepProfile {
     minLastWindow: Duration(hours: 2, minutes: 20),
     maxLastWindow: Duration(hours: 4),
     maxDaySleep: Duration(hours: 3, minutes: 30),
-    usualWakeMinutes: 8 * 60,
-    plannedBedtimeMinutes: 21 * 60 + 15,
+    usualWakeMinutes: DuoNapSettings.defaultWakeMinutes,
+    plannedBedtimeMinutes: DuoNapSettings.defaultBedtimeMinutes,
   );
+
+  /// The same numbers, with the wake time and bedtime the family set.
+  DuoNapSleepProfile anchoredTo(DuoNapSettings settings) {
+    return DuoNapSleepProfile(
+      wakeWindows: wakeWindows,
+      napLengths: napLengths,
+      minLastWindow: minLastWindow,
+      maxLastWindow: maxLastWindow,
+      maxDaySleep: maxDaySleep,
+      usualWakeMinutes: settings.usualWakeMinutes,
+      plannedBedtimeMinutes: settings.plannedBedtimeMinutes,
+    );
+  }
 
   DuoNapSleepProfile copyWith({
     List<Duration>? wakeWindows,

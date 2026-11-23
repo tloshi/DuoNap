@@ -1,3 +1,4 @@
+import '../domain/duonap_plan_item.dart';
 import '../domain/duonap_sleep_session.dart';
 import '../domain/duonap_today_snapshot.dart';
 import 'duonap_profile_learner.dart';
@@ -7,8 +8,11 @@ import 'duonap_profile_learner.dart';
 class DuoNapDayHistory {
   const DuoNapDayHistory();
 
-  static const int _earliestWakeHour = 5;
-  static const int _latestWakeHour = 14;
+  /// A morning wake-up happens from this hour on. Sleep starting earlier is night.
+  static const int earliestWakeHour = 5;
+
+  /// A morning wake-up happens before this hour. Night sleep starts after it.
+  static const int latestWakeHour = 14;
   static const int _learningDays = 10;
 
   DuoNapSleepSession? ongoing(List<DuoNapSleepSession> sessions) {
@@ -32,13 +36,14 @@ class DuoNapDayHistory {
     return DuoNapBabyStatus(asleep: false, since: lastEnd);
   }
 
-  /// The morning wake-up on [day]: the end of the last night sleep that ended
-  /// that morning. Null while the baby is still in last night's sleep.
+  /// The morning wake-up on [day]: the latest end of a night sleep, or of a
+  /// wake-up logged by hand, that morning. Null while the baby is still in
+  /// last night's sleep.
   DateTime? wakeOn(List<DuoNapSleepSession> sessions, DateTime day) {
-    final latest = DateTime(day.year, day.month, day.day, _latestWakeHour);
+    final latest = DateTime(day.year, day.month, day.day, latestWakeHour);
     DateTime? wake;
     for (final session in sessions) {
-      if (session.kind != DuoNapSleepKind.night) continue;
+      if (session.kind == DuoNapSleepKind.nap) continue;
       final end = session.end;
       if (end == null && session.start.isBefore(latest)) return null;
       if (end == null || !_isMorningOf(end, day)) continue;
@@ -51,7 +56,7 @@ class DuoNapDayHistory {
   DateTime? nightStartOn(List<DuoNapSleepSession> sessions, DateTime day) {
     DateTime? earliest;
     for (final session in sessions) {
-      final evening = session.start.hour >= _latestWakeHour;
+      final evening = session.start.hour >= latestWakeHour;
       final tonight = _sameDay(session.start, day) && evening;
       if (session.kind != DuoNapSleepKind.night || !tonight) continue;
       if (earliest == null || session.start.isBefore(earliest)) {
@@ -59,6 +64,25 @@ class DuoNapDayHistory {
       }
     }
     return earliest;
+  }
+
+  /// The session behind one logged line of the plan, or null if nothing is
+  /// logged for it. The line's own date picks the day.
+  DuoNapSleepSession? loggedFor(
+    List<DuoNapSleepSession> sessions,
+    DuoNapPlanItem item,
+  ) {
+    final day = item.start;
+    return switch (item.kind) {
+      DuoNapPlanKind.wake => wakeSource(sessions, day),
+      DuoNapPlanKind.night => _startingAt(sessions, nightStartOn(sessions, day)),
+      DuoNapPlanKind.nap => _napAt(napsOn(sessions, day), item.index),
+    };
+  }
+
+  /// The night sleep or hand wake-up whose end is the morning wake-up on [day].
+  DuoNapSleepSession? wakeSource(List<DuoNapSleepSession> sessions, DateTime day) {
+    return _endingAt(sessions, wakeOn(sessions, day));
   }
 
   List<DuoNapSleepSession> napsOn(List<DuoNapSleepSession> sessions, DateTime day) {
@@ -81,9 +105,27 @@ class DuoNapDayHistory {
     return records;
   }
 
+  DuoNapSleepSession? _endingAt(List<DuoNapSleepSession> sessions, DateTime? at) {
+    if (at == null) return null;
+    final matches = sessions.where((s) => s.kind != DuoNapSleepKind.nap && s.end == at);
+    return matches.isEmpty ? null : matches.last;
+  }
+
+  DuoNapSleepSession? _startingAt(List<DuoNapSleepSession> sessions, DateTime? at) {
+    if (at == null) return null;
+    final matches = sessions.where((s) => s.kind == DuoNapSleepKind.night && s.start == at);
+    return matches.isEmpty ? null : matches.first;
+  }
+
+  /// Nap number [index] counts from 1.
+  DuoNapSleepSession? _napAt(List<DuoNapSleepSession> naps, int index) {
+    if (index < 1 || index > naps.length) return null;
+    return naps[index - 1];
+  }
+
   bool _isMorningOf(DateTime time, DateTime day) {
     final inWindow =
-        time.hour >= _earliestWakeHour && time.hour < _latestWakeHour;
+        time.hour >= earliestWakeHour && time.hour < latestWakeHour;
     return _sameDay(time, day) && inWindow;
   }
 

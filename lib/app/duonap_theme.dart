@@ -16,6 +16,20 @@ class DuoNapColors {
   static const Color first = Color(0xFFF6BE7A);
   static const Color second = Color(0xFF7C9FF0);
 
+  /// Bottom sheet, from the "D · Dialogu" mockup.
+  static const Color sheet = Color(0xFF1A1C38);
+  static const Color sheetBorder = Color(0xFF2A2D52);
+  static const Color handle = Color(0xFF4A4E7A);
+
+  /// Wells inside a sheet or card: steppers, the baby selector, text fields.
+  static const Color inset = Color(0xFF101226);
+
+  /// Unselected labels that still need to read clearly.
+  static const Color soft = Color(0xFFC9CBE0);
+
+  /// Night view ground, darker than the day.
+  static const Color night = Color(0xFF070812);
+
   static Color ofBaby(DuoNapBabyId id) {
     return id == DuoNapBabyId.first ? first : second;
   }

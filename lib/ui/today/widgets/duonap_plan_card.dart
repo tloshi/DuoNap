@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/duonap_theme.dart';
-import '../../../domain/duonap_baby.dart';
 import '../../../domain/duonap_plan_item.dart';
 import '../duonap_today_formatters.dart';
 
-/// The full day as a list: wake-up, each nap, night.
+/// The full day as a list: wake-up, each nap, night. Logged rows and the
+/// wake-up row can be tapped to correct them.
 class DuoNapPlanCard extends StatelessWidget {
-  const DuoNapPlanCard({super.key, required this.plan});
+  const DuoNapPlanCard({
+    super.key,
+    required this.plan,
+    required this.secondInitial,
+    required this.onRowTap,
+  });
 
   final List<DuoNapPlanItem> plan;
+
+  /// Shown beside a time that differs for the second baby.
+  final String secondInitial;
+  final ValueChanged<DuoNapPlanItem> onRowTap;
 
   @override
   Widget build(BuildContext context) {
@@ -36,17 +45,29 @@ class DuoNapPlanCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          for (final item in plan) _PlanRow(item: item),
+          for (final item in plan)
+            _PlanRow(
+              item: item,
+              secondInitial: secondInitial,
+              onTap: _canEdit(item) ? () => onRowTap(item) : null,
+            ),
         ],
       ),
     );
   }
+
+  /// Something logged can be corrected. The wake-up can always be set by hand.
+  bool _canEdit(DuoNapPlanItem item) {
+    return !item.isPredicted || item.kind == DuoNapPlanKind.wake;
+  }
 }
 
 class _PlanRow extends StatelessWidget {
-  const _PlanRow({required this.item});
+  const _PlanRow({required this.item, required this.secondInitial, required this.onTap});
 
   final DuoNapPlanItem item;
+  final String secondInitial;
+  final VoidCallback? onTap;
 
   static const Duration _range = Duration(minutes: 15);
 
@@ -61,33 +82,39 @@ class _PlanRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final strong = textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700);
     final muted = textTheme.bodySmall?.copyWith(color: DuoNapColors.muted);
-    return Container(
-      height: 44,
-      margin: const EdgeInsets.symmetric(vertical: 1),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Material(
         color: _active ? DuoNapColors.highlight : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 54,
-            child: Text(DuoNapFormat.clock(item.start), style: strong),
-          ),
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                text: DuoNapFormat.title(item),
-                style: strong,
-                children: [TextSpan(text: _detail(), style: muted)],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 54,
+                  child: Text(DuoNapFormat.clock(item.start), style: strong),
+                ),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      text: DuoNapFormat.title(item),
+                      style: strong,
+                      children: [TextSpan(text: _detail(), style: muted)],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                _trailing(),
+              ],
             ),
           ),
-          _trailing(),
-        ],
+        ),
       ),
     );
   }
@@ -100,8 +127,7 @@ class _PlanRow extends StatelessWidget {
     }
     final second = item.secondStart;
     if (second != null) {
-      final initial = DuoNapFamily.byId(DuoNapBabyId.second).initial;
-      parts.add('$initial ${DuoNapFormat.clock(second)}');
+      parts.add('$secondInitial ${DuoNapFormat.clock(second)}');
     }
     return parts.isEmpty ? '' : '   ${parts.join(' · ')}';
   }

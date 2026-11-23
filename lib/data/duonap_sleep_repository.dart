@@ -46,6 +46,16 @@ class DuoNapHiveSleepRepository implements DuoNapSleepRepository {
     }
   }
 
+  @override
+  Future<DuoNapResult<void>> delete(String id) async {
+    try {
+      await _box.delete(id);
+      return const DuoNapSuccess<void>(null);
+    } on Object catch (error) {
+      return DuoNapFailure<void>('DELETE_FAILED', error.toString());
+    }
+  }
+
   DuoNapSleepSession _decode(String raw) {
     final json = jsonDecode(raw) as Map<String, dynamic>;
     return DuoNapSleepSessionDto.fromJson(json).toDomain();

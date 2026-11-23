@@ -4,7 +4,40 @@ import '../../domain/duonap_today_snapshot.dart';
 class DuoNapFormat {
   const DuoNapFormat._();
 
+  static const List<String> _weekdays = [
+    'e hënë',
+    'e martë',
+    'e mërkurë',
+    'e enjte',
+    'e premte',
+    'e shtunë',
+    'e diel',
+  ];
+
+  static const List<String> _months = [
+    'janar',
+    'shkurt',
+    'mars',
+    'prill',
+    'maj',
+    'qershor',
+    'korrik',
+    'gusht',
+    'shtator',
+    'tetor',
+    'nëntor',
+    'dhjetor',
+  ];
+
   static String clock(DateTime time) => '${_two(time.hour)}:${_two(time.minute)}';
+
+  /// Minutes after midnight as a clock time: 1275 is "21:15".
+  static String minutesOfDay(int minutes) => '${_two(minutes ~/ 60)}:${_two(minutes % 60)}';
+
+  /// "e martë 3 nëntor".
+  static String date(DateTime day) {
+    return '${_weekdays[day.weekday - 1]} ${day.day} ${_months[day.month - 1]}';
+  }
 
   static String duration(Duration value) {
     final minutes = value.inMinutes.abs();
