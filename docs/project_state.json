@@ -2,10 +2,11 @@
   "project": "DuoNap",
   "updated": "2026-11-23",
   "stack": {
-    "framework": "Flutter",
-    "state": "flutter_riverpod (Notifier, no code generation)",
-    "storage": "Hive (JSON string per sleep session)",
-    "fonts": "google_fonts (Sora)"
+    "framework": "Flutter 3.41.9 (stable channel), Dart 3.11.5",
+    "android_build": "Android Gradle Plugin 8.11.1, Kotlin 2.2.20 (from the stable flutter create template)",
+    "state": "flutter_riverpod 2.6.1 (Notifier, no code generation)",
+    "storage": "Hive 2.2.3 (JSON string per sleep session)",
+    "fonts": "google_fonts 6.3.3 (Sora)"
   },
   "architecture": "UI <-> ViewModel <-> Service <-> Repository. DTOs only in lib/data. Class prefix: DuoNap.",
   "docs": {
@@ -13,30 +14,34 @@
     "plan": "docs/PLAN.md",
     "agent_instructions": "CLAUDE.md"
   },
-  "current_phase": "Phase 0: first compile and run",
+  "current_phase": "Phase 0 done. Waiting for Loshi's go-ahead before Phase 1.",
   "recent_changes": [
+    "Phase 0: generated android/ and ios/ with flutter create on Flutter stable 3.41.9. flutter analyze is clean and all 16 tests pass with no Dart changes. The app runs on an Android 16 emulator, and the three buttons change the plan and button states on screen.",
+    "Phase 0 toolchain fix: the Flutter SDK was on flutter-3.47-candidate.0. Its Android template (AGP 9.1, Kotlin 2.4, no kotlin-android plugin) produced APKs that installed but would not launch (MainActivity not found). This happened with a blank app too. Switched the SDK to stable and regenerated the platform folders.",
     "Added docs/LOGIC.md (sleep rules, evidence, open questions), docs/PLAN.md (phases, data model, design tokens) and CLAUDE.md.",
     "Initial project: domain models, Hive repository, plan engine, twin plan merger, profile learner, sleep service.",
     "Today screen in the D design direction: twin ring, day plan card, three action buttons.",
     "Unit tests for the plan engine, profile learner, twin merger and formatters."
   ],
   "current_tasks": [
-    "Phase 0: flutter create, pub get, analyze, test, run. The Dart code has never been compiled.",
-    "Phase 1: edit and delete a logged sleep, log the first morning by hand, settings, night view.",
+    "Phase 1 (not started, needs go-ahead): edit and delete a logged sleep, log the first morning by hand, settings, night view.",
     "Phase 2: shift plan toward 19:00-07:00, earlier night after a short night.",
     "Phase 3: Firestore sync between two phones.",
     "Phase 4: notifications. Phase 5: history. Phase 6: optional AI logging and weekly summary."
   ],
   "files_affected": [
-    "CLAUDE.md",
-    "docs/LOGIC.md",
-    "docs/PLAN.md",
-    "docs/project_state.json",
-    "README.md"
+    "analysis_options.yaml",
+    ".metadata",
+    "pubspec.lock",
+    "android/",
+    "ios/",
+    "docs/project_state.json"
   ],
   "open_decisions": [
     "Planned bedtime and usual wake time are constants in DuoNapSleepProfile.starter until there is a settings screen.",
-    "Night vs nap is decided by the clock when sleep starts: within 60 minutes of the planned bedtime, or before 05:00, counts as night.",
+    "Night vs nap: LOGIC.md says sleep starting 'within 60 minutes of the planned bedtime, or before 05:00' is night. DuoNapSleepService._newSession treats any sleep from 60 minutes before bedtime until midnight as night (seen on the emulator: a sleep at 23:34 was logged as night). Decide which wording is right, then align LOGIC.md or the code.",
+    "Release builds: the main AndroidManifest.xml has no INTERNET permission, so google_fonts cannot download Sora outside debug builds. Choose between adding the permission and bundling the font as an asset.",
+    "Opening the app late in the evening with no wake-up logged shows 'Zgjimi duhej ne 08:00' (wake-up overdue). This follows rules 1 and 7 but reads oddly on a first launch; Phase 1's manual morning log may cover it.",
     "Babies' exact age is unconfirmed; needed only for an age table for new users.",
     "The 2 h 20 min minimum last wake window rests on one observation."
   ]
