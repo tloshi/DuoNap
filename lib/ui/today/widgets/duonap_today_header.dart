@@ -6,16 +6,19 @@ import '../../../domain/duonap_today_snapshot.dart';
 import '../../common/duonap_round_button.dart';
 import '../duonap_today_formatters.dart';
 
-/// Twin avatars, the time, and the buttons for the night view and settings.
+/// Twin avatars, the time, and the buttons for the night view, the path
+/// toward 19:00 – 07:00, and settings.
 class DuoNapTodayHeader extends StatelessWidget {
   const DuoNapTodayHeader({
     super.key,
     required this.snapshot,
+    required this.onPath,
     required this.onSettings,
     this.onShowNight,
   });
 
   final DuoNapTodaySnapshot snapshot;
+  final VoidCallback onPath;
   final VoidCallback onSettings;
 
   /// Set only at night, when the parent chose the day view instead.
@@ -28,10 +31,12 @@ class DuoNapTodayHeader extends StatelessWidget {
       children: [
         _TwinAvatars(babies: snapshot.babies),
         Expanded(
-          child: Text(
-            'Sot, ora ${DuoNapFormat.clock(snapshot.now)}',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'Sot, ora ${DuoNapFormat.clock(snapshot.now)}',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
           ),
         ),
         if (showNight != null) ...[
@@ -42,6 +47,12 @@ class DuoNapTodayHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
         ],
+        DuoNapRoundButton(
+          icon: Icons.trending_down_rounded,
+          label: 'Rruga drejt 19 deri 07',
+          onTap: onPath,
+        ),
+        const SizedBox(width: 8),
         DuoNapRoundButton(
           icon: Icons.tune_rounded,
           label: 'Cilësimet',

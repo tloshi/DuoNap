@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/duonap_theme.dart';
-import '../../domain/duonap_baby.dart';
-import '../../domain/duonap_settings.dart';
 import '../common/duonap_error_text.dart';
 import '../common/duonap_pill_button.dart';
 import '../common/duonap_round_button.dart';
-import '../common/duonap_time_stepper.dart';
-import '../today/duonap_today_formatters.dart';
 import 'duonap_settings_view_model.dart';
+import 'widgets/duonap_settings_cards.dart';
 
 /// Baby names, planned bedtime and usual wake time.
 class DuoNapSettingsScreen extends ConsumerWidget {
@@ -31,9 +28,13 @@ class DuoNapSettingsScreen extends ConsumerWidget {
             if (draft == null)
               const Center(child: CircularProgressIndicator())
             else ...[
-              _NamesCard(draft: draft, onName: viewModel.setName),
+              DuoNapSettingsNamesCard(draft: draft, onName: viewModel.setName),
               const SizedBox(height: 14),
-              _TimesCard(draft: draft, viewModel: viewModel),
+              DuoNapSettingsTimesCard(
+                draft: draft,
+                viewModel: viewModel,
+                pathRunning: state.pathRunning,
+              ),
               const SizedBox(height: 20),
               DuoNapPillButton(
                 label: 'Ruaje',
@@ -71,120 +72,6 @@ class _TopBar extends StatelessWidget {
         Text(
           'Cilësimet',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-      ],
-    );
-  }
-}
-
-class _Card extends StatelessWidget {
-  const _Card({required this.title, required this.children});
-
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: DuoNapColors.surface,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: DuoNapColors.muted),
-          ),
-          const SizedBox(height: 12),
-          ...children,
-        ],
-      ),
-    );
-  }
-}
-
-class _NamesCard extends StatelessWidget {
-  const _NamesCard({required this.draft, required this.onName});
-
-  final DuoNapSettings draft;
-  final void Function(DuoNapBabyId id, String name) onName;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Card(
-      title: 'Emrat',
-      children: [
-        _NameField(label: 'Binjakja e parë', baby: draft.baby(DuoNapBabyId.first), onName: onName),
-        const SizedBox(height: 12),
-        _NameField(label: 'Binjakja e dytë', baby: draft.baby(DuoNapBabyId.second), onName: onName),
-      ],
-    );
-  }
-}
-
-class _NameField extends StatelessWidget {
-  const _NameField({required this.label, required this.baby, required this.onName});
-
-  final String label;
-  final DuoNapBaby baby;
-  final void Function(DuoNapBabyId id, String name) onName;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return TextFormField(
-      initialValue: baby.name,
-      maxLength: DuoNapSettings.maxNameLength,
-      textCapitalization: TextCapitalization.words,
-      cursorColor: DuoNapColors.text,
-      style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-      onChanged: (name) => onName(baby.id, name),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: textTheme.bodySmall?.copyWith(color: DuoNapColors.ofBaby(baby.id)),
-        counterText: '',
-        filled: true,
-        fillColor: DuoNapColors.inset,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-}
-
-class _TimesCard extends StatelessWidget {
-  const _TimesCard({required this.draft, required this.viewModel});
-
-  final DuoNapSettings draft;
-  final DuoNapSettingsViewModel viewModel;
-
-  @override
-  Widget build(BuildContext context) {
-    const step = '${DuoNapSettingsViewModel.stepMinutes} minuta';
-    return _Card(
-      title: 'Orët',
-      children: [
-        DuoNapTimeStepper(
-          label: 'Gjumi i natës',
-          value: DuoNapFormat.minutesOfDay(draft.plannedBedtimeMinutes),
-          onMinus: () => viewModel.nudgeBedtime(-1),
-          onPlus: () => viewModel.nudgeBedtime(1),
-          minusLabel: 'Gjumi i natës $step më herët',
-          plusLabel: 'Gjumi i natës $step më vonë',
-        ),
-        const SizedBox(height: 10),
-        DuoNapTimeStepper(
-          label: 'Zgjimi i zakonshëm',
-          value: DuoNapFormat.minutesOfDay(draft.usualWakeMinutes),
-          onMinus: () => viewModel.nudgeWake(-1),
-          onPlus: () => viewModel.nudgeWake(1),
-          minusLabel: 'Zgjimi $step më herët',
-          plusLabel: 'Zgjimi $step më vonë',
         ),
       ],
     );

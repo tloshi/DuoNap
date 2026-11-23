@@ -6,6 +6,7 @@ import '../../app/duonap_providers.dart';
 import '../../core/duonap_result.dart';
 import '../../domain/duonap_baby.dart';
 import '../../domain/duonap_settings.dart';
+import '../../domain/duonap_shift.dart';
 import '../common/duonap_error_text.dart';
 import '../today/duonap_today_view_model.dart';
 import 'duonap_settings_state.dart';
@@ -55,10 +56,12 @@ class DuoNapSettingsViewModel extends AutoDisposeNotifier<DuoNapSettingsState> {
   }
 
   Future<void> _load() async {
+    final shift = await ref.read(duoNapShiftServiceProvider).status();
+    final running = shift is DuoNapSuccess<DuoNapShiftStatus?> && shift.data != null;
     final result = await ref.read(duoNapSettingsServiceProvider).load();
     state = result.fold<DuoNapSettingsState>(
       (failure) => state.withError(duoNapErrorText(failure.code)),
-      (DuoNapSettings settings) => state.withDraft(settings),
+      (DuoNapSettings settings) => state.withPathRunning(running).withDraft(settings),
     );
   }
 

@@ -7,6 +7,7 @@ import '../../domain/duonap_plan_item.dart';
 import '../../domain/duonap_today_snapshot.dart';
 import '../edit/duonap_sleep_edit_sheet.dart';
 import '../edit/duonap_sleep_edit_view_model.dart';
+import '../path/duonap_path_screen.dart';
 import '../settings/duonap_settings_screen.dart';
 import 'duonap_today_state.dart';
 import 'duonap_today_view_model.dart';
@@ -87,7 +88,8 @@ class _Today extends ConsumerWidget {
       children: [
         DuoNapTodayHeader(
           snapshot: snapshot,
-          onSettings: () => _openSettings(context),
+          onPath: () => _open(context, const DuoNapPathScreen()),
+          onSettings: () => _open(context, const DuoNapSettingsScreen()),
           onShowNight: snapshot.isNight ? viewModel.showNight : null,
         ),
         if (message != null)
@@ -131,9 +133,7 @@ class _Today extends ConsumerWidget {
     await showDuoNapSleepEditSheet(context, snapshot.babies);
   }
 
-  void _openSettings(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const DuoNapSettingsScreen()),
-    );
+  void _open(BuildContext context, Widget screen) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 }

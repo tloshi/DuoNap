@@ -43,6 +43,32 @@ class DuoNapPathSteps extends StatelessWidget {
   }
 }
 
+/// The rule in one sentence, or why the next step is waiting.
+class DuoNapPathNotes extends StatelessWidget {
+  const DuoNapPathNotes({super.key, required this.held});
+
+  final bool held;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.4);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: held ? DuoNapColors.first : DuoNapColors.sheetBorder),
+      ),
+      child: Text(
+        held
+            ? 'Hapi i radhës pret edhe dy ditë: dy net rresht nisën më shumë se 30 minuta vonë.'
+            : 'Çdo hap është 15 minuta më herët, çdo tri ditë. Nëse dy net rresht nisin '
+                'më shumë se 30 minuta vonë, hapi pret edhe dy ditë.',
+        style: style,
+      ),
+    );
+  }
+}
+
 enum _Dot { now, next, goal }
 
 class _HeaderRow extends StatelessWidget {
