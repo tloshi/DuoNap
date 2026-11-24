@@ -46,7 +46,7 @@ class DuoNapTodayBuilder {
     for (final baby in DuoNapBabyId.values) {
       final own = inputs.sessions.where((s) => s.babyId == baby).toList();
       statuses[baby] = _history.statusOf(own);
-      babyPlans[baby] = _planFor(own, _babyAnchors(own, anchors, now), now);
+      babyPlans[baby] = _planFor(own, _adjusted(own, anchors, now), now);
     }
     final plan = _merger.merge(
       babyPlans[DuoNapBabyId.first] ?? const [],
@@ -71,8 +71,17 @@ class DuoNapTodayBuilder {
     return DuoNapShiftPlan.fromLog(shift, inputs.sessions).anchorsOn(day);
   }
 
-  /// One baby's anchors: tonight moves earlier after that baby's short night.
-  DuoNapAnchors _babyAnchors(
+  /// One baby's anchors for [day]: the shared ones, with tonight's bedtime
+  /// moved earlier after that baby's short night. [own] is that baby's log.
+  DuoNapAnchors babyAnchorsOn(
+    DuoNapTodayInputs inputs,
+    List<DuoNapSleepSession> own,
+    DateTime day,
+  ) {
+    return _adjusted(own, anchorsOn(inputs, day), day);
+  }
+
+  DuoNapAnchors _adjusted(
     List<DuoNapSleepSession> own,
     DuoNapAnchors shared,
     DateTime now,

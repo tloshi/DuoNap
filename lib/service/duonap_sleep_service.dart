@@ -54,7 +54,8 @@ class DuoNapSleepService {
     final own = inputs.data.sessions.where((s) => s.babyId == babyId).toList();
     final current = _history.ongoing(own);
     if (current != null) return _repository.save(current.ended(now));
-    return _repository.save(_newSession(babyId, now, inputs.data));
+    final bedtime = _builder.babyAnchorsOn(inputs.data, own, now).bedtimeMinutes;
+    return _repository.save(_newSession(babyId, now, bedtime));
   }
 
   /// Puts both babies in the same state. A baby already in it is left alone.
@@ -94,14 +95,15 @@ class DuoNapSleepService {
     return dayBefore.isBefore(recent) ? dayBefore : recent;
   }
 
-  /// Sleep that starts close to the day's bedtime, or before dawn, is night.
+  /// Sleep that starts close to this baby's bedtime tonight, or before dawn,
+  /// is night. [bedtimeMinutes] already includes an earlier night after a
+  /// short one.
   DuoNapSleepSession _newSession(
     DuoNapBabyId babyId,
     DateTime now,
-    DuoNapTodayInputs inputs,
+    int bedtimeMinutes,
   ) {
     final day = DateTime(now.year, now.month, now.day);
-    final bedtimeMinutes = _builder.anchorsOn(inputs, now).bedtimeMinutes;
     final bedtime = day.add(Duration(minutes: bedtimeMinutes));
     final nearBedtime = !now.isBefore(bedtime.subtract(_nightLead));
     final isNight = nearBedtime || now.hour < DuoNapDayHistory.earliestWakeHour;

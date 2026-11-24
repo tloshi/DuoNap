@@ -116,14 +116,20 @@ class DuoNapShiftPlan {
   static void _keepLater(Map<DateTime, DateTime> starts, List<DuoNapSleepSession> own) {
     final evenings = own
         .where((s) => s.kind == DuoNapSleepKind.night)
-        .where((s) => s.start.hour >= DuoNapDayHistory.latestWakeHour)
-        .map((s) => DateTime(s.start.year, s.start.month, s.start.day))
+        .map((s) => _eveningOf(s.start))
         .toSet();
     for (final evening in evenings) {
       final start = _history.nightStartOn(own, evening);
       final known = starts[evening];
       if (start != null && (known == null || start.isAfter(known))) starts[evening] = start;
     }
+  }
+
+  /// The evening a night start belongs to: the day before when it began
+  /// after midnight, before 05:00.
+  static DateTime _eveningOf(DateTime start) {
+    final early = start.hour < DuoNapDayHistory.earliestWakeHour;
+    return DateTime(start.year, start.month, start.day - (early ? 1 : 0));
   }
 
   static DateTime _plusDays(DateTime day, int days) {

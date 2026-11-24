@@ -56,6 +56,22 @@ void main() {
     expect(history.ongoing([wake]), isNull);
   });
 
+  test('a night that began after midnight belongs to the evening before', () {
+    final late = session(DuoNapSleepKind.night, at(25, 0, 30), at(25, 7, 0));
+
+    expect(history.nightStartOn([late], at(24, 0, 0)), at(25, 0, 30));
+    expect(history.nightStartOn([late], at(25, 0, 0)), isNull);
+  });
+
+  test('a night wake-up after midnight does not replace the evening start', () {
+    final sessions = [
+      session(DuoNapSleepKind.night, at(24, 21, 0), at(25, 1, 0)),
+      session(DuoNapSleepKind.night, at(25, 1, 30), at(25, 7, 0)),
+    ];
+
+    expect(history.nightStartOn(sessions, at(24, 0, 0)), at(24, 21, 0));
+  });
+
   test('finds the session behind each logged line of the plan', () {
     final night = session(DuoNapSleepKind.night, at(23, 21, 0), at(24, 7, 5));
     final nap1 = session(DuoNapSleepKind.nap, at(24, 9, 0), at(24, 10, 20));

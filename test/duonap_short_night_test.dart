@@ -59,6 +59,18 @@ void main() {
     expect(shortNight.earlierBy([...typicalWeek(), running], today), Duration.zero);
   });
 
+  test('a night that began after midnight still counts as last night', () {
+    final late = DuoNapSleepSession(
+      id: 'first-late',
+      babyId: DuoNapBabyId.first,
+      kind: DuoNapSleepKind.night,
+      start: at(22, 0, 30),
+      end: at(22, 8, 0),
+    );
+
+    expect(shortNight.earlierBy([...typicalWeek(), late], today), const Duration(minutes: 45));
+  });
+
   test('fewer than three earlier nights give no typical length', () {
     final sessions = [night(19, 8, 0), night(20, 8, 0), night(21, 6, 0)];
 

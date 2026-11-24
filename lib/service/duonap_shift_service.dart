@@ -46,6 +46,15 @@ class DuoNapShiftService {
     );
   }
 
+  /// Whether a path is running, without reading the sleep log.
+  Future<DuoNapResult<bool>> isRunning() async {
+    final loaded = await _shift.load();
+    return loaded.fold<DuoNapResult<bool>>(
+      (failure) => DuoNapFailure<bool>(failure.code, failure.message),
+      (DuoNapShiftSetup? setup) => DuoNapSuccess<bool>(setup != null),
+    );
+  }
+
   /// Starts today from the wake-up and bedtime in settings, aiming at 19:30.
   Future<DuoNapResult<void>> start() async {
     final current = await _shift.load();

@@ -96,6 +96,49 @@ void main() {
     expect(status.arrival, day(12, 21));
   });
 
+  test('a start already at the target has no steps', () {
+    final done = DuoNapShiftSetup(
+      startDay: day(11, 24),
+      start: const DuoNapAnchors(wakeMinutes: 7 * 60, bedtimeMinutes: 19 * 60),
+      targetBedtimeMinutes: 19 * 60 + 30,
+    );
+    final status = DuoNapShiftPlan(done, const {}).statusOn(day(12, 1));
+
+    expect(status.stepsTotal, 0);
+    expect(status.finished, isTrue);
+    expect(status.today.bedtimeMinutes, 19 * 60);
+  });
+
+  group('from the log', () {
+    DuoNapSleepSession night(DuoNapBabyId baby, DateTime start) {
+      return DuoNapSleepSession(
+        id: '${baby.name}-${start.millisecondsSinceEpoch}',
+        babyId: baby,
+        kind: DuoNapSleepKind.night,
+        start: start,
+        end: start.add(const Duration(hours: 8)),
+      );
+    }
+
+    test('a night that began after midnight counts as a late evening', () {
+      final plan = DuoNapShiftPlan.fromLog(setup, [
+        night(DuoNapBabyId.first, at(11, 26, 0, 30)),
+        night(DuoNapBabyId.first, at(11, 27, 0, 10)),
+      ]);
+
+      expect(anchorsOn(plan, day(11, 27)), '08:15 21:45');
+    });
+
+    test('a twin with no night logged leaves the other twin to decide', () {
+      final plan = DuoNapShiftPlan.fromLog(setup, [
+        night(DuoNapBabyId.second, at(11, 25, 22, 40)),
+        night(DuoNapBabyId.second, at(11, 26, 22, 35)),
+      ]);
+
+      expect(plan.statusOn(day(11, 27)).held, isTrue);
+    });
+  });
+
   test('the later twin decides when the night began', () {
     DuoNapSleepSession night(DuoNapBabyId baby, DateTime start) {
       return DuoNapSleepSession(

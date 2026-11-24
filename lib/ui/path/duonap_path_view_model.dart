@@ -32,25 +32,42 @@ class DuoNapPathViewModel extends AutoDisposeNotifier<DuoNapPathState> {
     return _change(() => ref.read(duoNapShiftServiceProvider).setTarget(minutes));
   }
 
+  /// Kept alive until done: the screen may close while the action runs.
   Future<void> _change(Future<DuoNapResult<void>> Function() action) async {
-    state = state.withBusy();
-    final result = await action();
-    if (result is DuoNapFailure<void>) {
-      state = state.withError(duoNapErrorText(result.code));
-      return;
+    final link = ref.keepAlive();
+    try {
+      state = state.withBusy();
+      final result = await action();
+      if (result is DuoNapFailure<void>) {
+        state = state.withError(duoNapErrorText(result.code));
+        return;
+      }
+      await _load();
+      await ref.read(duoNapTodayViewModelProvider.notifier).refresh();
+    } finally {
+      link.close();
     }
-    await _load();
-    await ref.read(duoNapTodayViewModelProvider.notifier).refresh();
   }
 
   Future<void> _load() async {
-    final settings = await ref.read(duoNapSettingsServiceProvider).load();
-    final status = await ref.read(duoNapShiftServiceProvider).status();
-    if (settings is! DuoNapSuccess<DuoNapSettings>) {
-      state = state.withError(duoNapErrorText('LOAD_FAILED'));
-      return;
+    final link = ref.keepAlive();
+    try {
+      final settings = await ref.read(duoNapSettingsServiceProvider).load();
+      final status = await ref.read(duoNapShiftServiceProvider).status();
+      state = _loaded(settings, status);
+    } finally {
+      link.close();
     }
-    state = status.fold<DuoNapPathState>(
+  }
+
+  DuoNapPathState _loaded(
+    DuoNapResult<DuoNapSettings> settings,
+    DuoNapResult<DuoNapShiftStatus?> status,
+  ) {
+    if (settings is! DuoNapSuccess<DuoNapSettings>) {
+      return state.withError(duoNapErrorText('LOAD_FAILED'));
+    }
+    return status.fold<DuoNapPathState>(
       (failure) => state.withError(duoNapErrorText(failure.code)),
       (DuoNapShiftStatus? value) => state.withLoaded(value, settings.data.anchors),
     );

@@ -52,18 +52,26 @@ class DuoNapDayHistory {
     return wake;
   }
 
-  /// When night sleep began on the evening of [day]. Null until it is logged.
+  /// When night sleep began on the evening of [day]. A night that began after
+  /// midnight, before 05:00, belongs to the evening before. Null until logged.
   DateTime? nightStartOn(List<DuoNapSleepSession> sessions, DateTime day) {
     DateTime? earliest;
     for (final session in sessions) {
-      final evening = session.start.hour >= latestWakeHour;
-      final tonight = _sameDay(session.start, day) && evening;
+      final tonight = isEveningOf(session.start, day);
       if (session.kind != DuoNapSleepKind.night || !tonight) continue;
       if (earliest == null || session.start.isBefore(earliest)) {
         earliest = session.start;
       }
     }
     return earliest;
+  }
+
+  /// [time] falls in the evening of [day]: from 14:00 that day until 05:00
+  /// the next morning.
+  bool isEveningOf(DateTime time, DateTime day) {
+    if (_sameDay(time, day)) return time.hour >= latestWakeHour;
+    final next = DateTime(day.year, day.month, day.day + 1);
+    return _sameDay(time, next) && time.hour < earliestWakeHour;
   }
 
   /// The session behind one logged line of the plan, or null if nothing is

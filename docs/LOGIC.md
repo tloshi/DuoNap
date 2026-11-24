@@ -44,7 +44,7 @@ To test the last line: compare the daily nap target on the morning after a long 
 
 ## 4. Rules DuoNap implements
 
-Code: `lib/service/duonap_plan_engine.dart`. Numbers: `DuoNapSleepProfile.starter`, except the usual wake time and the planned bedtime, which come from the family settings (`DuoNapSettings`, defaults 08:00 and 21:15).
+Code: `lib/service/duonap_plan_engine.dart`. Numbers: `DuoNapSleepProfile.starter`, except the usual wake time and the planned bedtime. Those come from the family settings (`DuoNapSettings`, defaults 08:00 and 21:15), or from the path toward 19:00 – 07:00 while it runs (see "Shift plan toward the target" below). After a short night, one baby's bedtime can move earlier (see "Earlier night after a short night").
 
 1. **The morning wake-up starts the day.** Until it is logged, the usual wake time (settings, default 08:00) is the anchor.
 2. **Next nap = end of the previous sleep + the wake window for that nap position.** Starter windows: 1 h 45, 2 h 20, 2 h 15.
@@ -77,10 +77,10 @@ Code: `lib/service/duonap_profile_learner.dart`.
 
 Code: `lib/service/duonap_sleep_service.dart`, `lib/service/duonap_day_history.dart`.
 
-- Sleep that starts within 60 minutes of the planned bedtime, or before 05:00, is **night**. Everything else is a **nap**. The bedtime is the one in settings. (Open question in section 7: the code counts every start from 60 minutes before bedtime until midnight as night.)
+- Sleep that starts within 60 minutes of the planned bedtime, or before 05:00, is **night**. Everything else is a **nap**. The bedtime is that baby's bedtime for the day: from settings or the path, moved earlier after a short night. (Open question in section 7: the code counts every start from 60 minutes before bedtime until midnight as night.)
 - The morning wake-up is the latest end, between 05:00 and 14:00, of either a night sleep or a **wake-up logged by hand**.
 - A wake-up logged by hand is stored as its own session of kind `wake`, with start and end at the same moment. It is not sleep: it is never a nap, never night sleep, never overlaps anything, and is not counted in any sleep length.
-- A night that began at or after 14:00 belongs to that evening.
+- A night that began at or after 14:00 belongs to that evening. A night that began after midnight, before 05:00, belongs to the evening before, so a very late night still counts as that evening's night. A night wake-up after midnight never replaces the evening's earlier start.
 - The night view is shown once tonight's night sleep is logged, and before 05:00.
 
 ### Correcting the log
@@ -95,6 +95,26 @@ Code: `lib/service/duonap_sleep_edit_service.dart`, `lib/service/duonap_sleep_ed
 - A hand wake-up can be deleted. A wake-up that is the end of a logged night cannot, because that would delete the night.
 - When a night is split by night wake-ups, the "Nata" row opens the first part only.
 
+### Shift plan toward the target
+
+Code: `lib/service/duonap_shift_plan.dart` (pure), `lib/service/duonap_shift_service.dart`. Screen: "Rruga".
+
+- The path starts when the parent taps "Fillo rrugën". Day 0 is that day; its wake-up and bedtime are the ones in settings at that moment.
+- Every **3 days**, both move **15 minutes earlier**. The wake-up stops at **07:00**; the bedtime stops at the **target**. The path is done when both have stopped.
+- The target is **19:30** while the babies take three naps. Nap dropping is not built yet, so the parent switches it by hand ("Ndrysho synimin": 19:00, 19:30 or 20:00).
+- **Hold rule:** when a step is due, look at the two evenings before it. If night began more than 30 minutes after that evening's path bedtime both times, the step waits 2 days, then the same check runs again. It can wait more than once.
+- For the twins, an evening's night start is the **later** twin's. An evening with no night logged is not late.
+- While the path runs, its wake-up and bedtime replace the ones in settings, and the settings screen shows a note instead of the time steppers. Stopping the path returns to settings.
+
+### Earlier night after a short night
+
+Code: `lib/service/duonap_short_night.dart`. Applied **per baby**.
+
+- A night's length is from its start (the evening, as above) to the morning wake-up. Night wake-ups are not subtracted.
+- The typical night is the **median of the 7 nights before last night**. At least 3 of them must be logged, or nothing changes.
+- If last night was **more than 45 minutes** shorter than typical, tonight's bedtime for that baby moves earlier by **half the shortfall, at most 45 minutes**, on top of the path or settings bedtime.
+- Naps are never lengthened to make up for it.
+
 ## 5. Where DuoNap differs on purpose
 
 | Topic | Reference app | DuoNap | Why |
@@ -105,21 +125,6 @@ Code: `lib/service/duonap_sleep_edit_service.dart`, `lib/service/duonap_sleep_ed
 
 ## 6. Designed, not built yet
 
-### Shift plan toward the target
-
-- Start from the current averages: wake-up 08:15, night 21:45.
-- Every **3 days**, both move **15 minutes earlier**.
-- Wake-up stops at 07:00. Night continues to the target.
-- **Hold rule:** if night began more than 30 minutes after the planned bedtime two nights in a row, the step is held for 2 more days.
-- With three naps the target is 19:30. It becomes 19:00 when the plan drops to two naps.
-- Implementation: `plannedBedtimeMinutes` and `usualWakeMinutes` stop being constants and come from a `DuoNapShiftPlan` for the given date.
-
-### Earlier night after a short night
-
-- Typical night length = median of the last 7 nights.
-- If last night was more than 45 minutes shorter, tonight's bedtime moves earlier by half the shortfall, at most 45 minutes.
-- Naps are never lengthened to make up for it.
-
 ### Nap count changes
 
 - Drop the last nap when it has been skipped or under 20 minutes on 5 of the last 7 days.
@@ -128,6 +133,7 @@ Code: `lib/service/duonap_sleep_edit_service.dart`, `lib/service/duonap_sleep_ed
 ## 7. Open questions
 
 - **Night or nap by the clock.** Section 4 says sleep starting "within 60 minutes of the planned bedtime" is night. The code counts any start from 60 minutes before bedtime until midnight as night, so a sleep at 23:34 is night. Decide which is meant, then align this file or the code.
+- **Changing the path's target mid-way.** The hold check compares past evenings with the bedtime the path gives under the *current* target. Changing the target late in the path can therefore re-decide an earlier hold, so a step can appear or disappear in hindsight. Storing target changes with a date would fix this, if it matters in practice.
 - **The babies' exact age.** The reference app showed 5 months 30 days on 3 Nov. The starter numbers come from the log, not from an age table, so the plan works either way, but an age table is needed for new users.
 - **The 2 h 20 minimum last window** rests on one observation. Check it against a week of DuoNap data.
 - **The daily nap target hypothesis** in section 3 is unconfirmed.

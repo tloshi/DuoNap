@@ -7,7 +7,8 @@ The sleep rules behind it are in [LOGIC.md](LOGIC.md).
 
 - First commit is in: domain, Hive storage, plan engine, twin merger, learner, Today screen, unit tests.
 - **Phase 0 done** (branch `phase-0-first-run`): compiles on Flutter stable 3.41.9, analyze clean, runs on an Android emulator.
-- **Phase 1 built** (branch `phase-1-daily-use`): edit and delete, "woke up at…", settings, night view. Checked on the emulator; not yet used by the family for a full day, which is the done criterion.
+- **Phase 1 built** (merged into `main`): edit and delete, "woke up at…", settings, night view. Checked on the emulator; not yet used by the family for a full day, which is the done criterion.
+- **Phase 2 built** (branch `phase-2-path-to-19-07`, merged into `main`): shift plan with hold rule, earlier night after a short night (per baby), Rruga screen with start, target choice and stop. Checked on the emulator; the done criterion (bedtime moves on its own every three days and holds after two late nights) is covered by unit tests and needs real days to see in use.
 - The rules and the expected values in the engine tests were checked against a second implementation of the same rules.
 
 ## Phase 0: first compile and run
