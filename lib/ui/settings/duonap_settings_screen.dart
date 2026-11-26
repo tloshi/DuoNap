@@ -6,6 +6,7 @@ import '../common/duonap_error_text.dart';
 import '../common/duonap_pill_button.dart';
 import '../common/duonap_round_button.dart';
 import 'duonap_settings_view_model.dart';
+import 'widgets/duonap_family_card.dart';
 import 'widgets/duonap_settings_cards.dart';
 
 /// Baby names, planned bedtime and usual wake time.
@@ -42,6 +43,8 @@ class DuoNapSettingsScreen extends ConsumerWidget {
                 height: 56,
                 onTap: state.busy ? null : () => _save(context, viewModel),
               ),
+              const SizedBox(height: 24),
+              const DuoNapFamilyCard(),
             ],
             if (error != null) DuoNapErrorLine(message: error),
           ],

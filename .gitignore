@@ -30,3 +30,16 @@ ios/Flutter/Flutter.podspec
 # Secrets
 .env
 *.env
+
+# Firebase config with the project's API keys. The repo is public; regenerate
+# locally with `flutterfire configure` (see README).
+lib/firebase_options.dart
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+ios/firebase_app_id_file.json
+.firebaserc
+
+# Firestore rules tests (Node)
+firestore-tests/node_modules/
+firebase-debug.log
+firestore-debug.log

@@ -7,8 +7,9 @@ import '../../common/duonap_time_stepper.dart';
 import '../../today/duonap_today_formatters.dart';
 import '../duonap_settings_view_model.dart';
 
-class _Card extends StatelessWidget {
-  const _Card({required this.title, required this.children});
+/// A settings card: a small title, then [children] stacked.
+class DuoNapSettingsCard extends StatelessWidget {
+  const DuoNapSettingsCard({super.key, required this.title, required this.children});
 
   final String title;
   final List<Widget> children;
@@ -45,7 +46,7 @@ class DuoNapSettingsNamesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Card(
+    return DuoNapSettingsCard(
       title: 'Emrat',
       children: [
         _NameField(label: 'Binjakja e parë', baby: draft.baby(DuoNapBabyId.first), onName: onName),
@@ -105,7 +106,7 @@ class DuoNapSettingsTimesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (pathRunning) {
-      return _Card(
+      return DuoNapSettingsCard(
         title: 'Orët',
         children: [
           Text(
@@ -116,7 +117,7 @@ class DuoNapSettingsTimesCard extends StatelessWidget {
       );
     }
     const step = '${DuoNapSettingsViewModel.stepMinutes} minuta';
-    return _Card(
+    return DuoNapSettingsCard(
       title: 'Orët',
       children: [
         DuoNapTimeStepper(

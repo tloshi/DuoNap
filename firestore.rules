@@ -1,0 +1,90 @@
+rules_version = '2';
+
+// DuoNap: a family's data is readable and writable only by its members.
+// A phone joins with the family's current join code and can add only itself.
+// Data model and sync rules: docs/PLAN.md (Phase 3) and docs/LOGIC.md.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function familyPath(familyId) {
+      return /databases/$(database)/documents/families/$(familyId);
+    }
+
+    function isMember(familyId) {
+      return signedIn() && request.auth.uid in get(familyPath(familyId)).data.members;
+    }
+
+    function validFamily(data) {
+      return data.keys().hasAll(['members', 'joinCode', 'joinCodeExpiresAtMs', 'babies', 'settings', 'updatedAtMs'])
+        && data.keys().hasOnly(['members', 'joinCode', 'joinCodeExpiresAtMs', 'babies', 'settings', 'shift', 'updatedAtMs', 'joinedWith'])
+        && data.members is list && data.members.size() >= 1 && data.members.size() <= 6
+        && data.joinCode is string && data.joinCode.size() == 6
+        && data.joinCodeExpiresAtMs is int
+        && data.babies is list && data.babies.size() == 2
+        && data.settings is map
+        && data.updatedAtMs is int;
+    }
+
+    // A non-member adds exactly itself, proving it knows the unexpired code.
+    function isJoining(before, after) {
+      return !(request.auth.uid in before.members)
+        && after.diff(before).affectedKeys().hasOnly(['members', 'joinedWith'])
+        && after.members == before.members.concat([request.auth.uid])
+        && after.members.size() <= 6
+        && after.joinedWith == before.joinCode
+        && request.time.toMillis() < before.joinCodeExpiresAtMs;
+    }
+
+    function validSession(data) {
+      return data.keys().hasAll(['babyId', 'kind', 'startMs', 'endMs', 'updatedAtMs', 'updatedBy'])
+        && data.keys().hasOnly(['babyId', 'kind', 'startMs', 'endMs', 'updatedAtMs', 'updatedBy'])
+        && data.babyId in ['first', 'second']
+        && data.kind in ['nap', 'night', 'wake']
+        && data.startMs is int
+        && (data.endMs == null || data.endMs is int)
+        && data.updatedAtMs is int
+        && data.updatedBy == request.auth.uid;
+    }
+
+    match /families/{familyId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+      allow create: if signedIn()
+        && request.resource.data.members == [request.auth.uid]
+        && validFamily(request.resource.data);
+      allow update: if signedIn() && (
+        (request.auth.uid in resource.data.members
+          && request.resource.data.members == resource.data.members
+          && validFamily(request.resource.data))
+        || isJoining(resource.data, request.resource.data));
+      allow delete: if false;
+
+      match /sessions/{sessionId} {
+        allow read, delete: if isMember(familyId);
+        allow create: if isMember(familyId) && validSession(request.resource.data);
+        // Last write wins: an older copy cannot replace a newer one.
+        allow update: if isMember(familyId)
+          && validSession(request.resource.data)
+          && request.resource.data.updatedAtMs >= resource.data.updatedAtMs;
+      }
+    }
+
+    // Looked up by its exact code only; never listed, never taken over.
+    match /joinCodes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['familyId', 'expiresAtMs'])
+        && request.resource.data.expiresAtMs is int
+        && request.auth.uid in getAfter(familyPath(request.resource.data.familyId)).data.members;
+      allow update: if signedIn()
+        && resource.data.familyId == request.resource.data.familyId
+        && request.resource.data.keys().hasOnly(['familyId', 'expiresAtMs'])
+        && request.auth.uid in getAfter(familyPath(request.resource.data.familyId)).data.members;
+      allow delete: if false;
+    }
+  }
+}

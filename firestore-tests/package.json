@@ -1,0 +1,13 @@
+{
+  "name": "duonap-firestore-rules-tests",
+  "private": true,
+  "type": "module",
+  "description": "Tests firestore.rules in the local Firestore emulator. Run from the repo root: firebase emulators:exec --only firestore --project demo-duonap \"npm --prefix firestore-tests test\"",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "firebase": "^13.4.0"
+  }
+}

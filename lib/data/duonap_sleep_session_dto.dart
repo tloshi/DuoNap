@@ -3,6 +3,8 @@ import '../domain/duonap_baby.dart';
 import '../domain/duonap_sleep_session.dart';
 
 /// Storage shape of a sleep session. Never leaves the data layer.
+/// [updatedAtMs] decides which phone's copy wins; records saved before sync
+/// existed have 0.
 class DuoNapSleepSessionDto implements DuoNapBaseDto<DuoNapSleepSession> {
   const DuoNapSleepSessionDto({
     required this.id,
@@ -10,6 +12,8 @@ class DuoNapSleepSessionDto implements DuoNapBaseDto<DuoNapSleepSession> {
     required this.kind,
     required this.startMs,
     this.endMs,
+    this.updatedAtMs = 0,
+    this.updatedBy,
   });
 
   factory DuoNapSleepSessionDto.fromDomain(DuoNapSleepSession session) {
@@ -29,6 +33,21 @@ class DuoNapSleepSessionDto implements DuoNapBaseDto<DuoNapSleepSession> {
       kind: json['kind'] as String,
       startMs: json['startMs'] as int,
       endMs: json['endMs'] as int?,
+      updatedAtMs: json['updatedAtMs'] as int? ?? 0,
+      updatedBy: json['updatedBy'] as String?,
+    );
+  }
+
+  /// Firestore shape: the id is the document id and the baby is `babyId`.
+  factory DuoNapSleepSessionDto.fromCloud(String id, Map<String, dynamic> data) {
+    return DuoNapSleepSessionDto(
+      id: id,
+      baby: data['babyId'] as String,
+      kind: data['kind'] as String,
+      startMs: data['startMs'] as int,
+      endMs: data['endMs'] as int?,
+      updatedAtMs: data['updatedAtMs'] as int? ?? 0,
+      updatedBy: data['updatedBy'] as String?,
     );
   }
 
@@ -37,6 +56,20 @@ class DuoNapSleepSessionDto implements DuoNapBaseDto<DuoNapSleepSession> {
   final String kind;
   final int startMs;
   final int? endMs;
+  final int updatedAtMs;
+  final String? updatedBy;
+
+  DuoNapSleepSessionDto stamped(int atMs, String? by) {
+    return DuoNapSleepSessionDto(
+      id: id,
+      baby: baby,
+      kind: kind,
+      startMs: startMs,
+      endMs: endMs,
+      updatedAtMs: atMs,
+      updatedBy: by,
+    );
+  }
 
   @override
   DuoNapSleepSession toDomain() {
@@ -58,6 +91,20 @@ class DuoNapSleepSessionDto implements DuoNapBaseDto<DuoNapSleepSession> {
       'kind': kind,
       'startMs': startMs,
       'endMs': endMs,
+      'updatedAtMs': updatedAtMs,
+      'updatedBy': updatedBy,
+    };
+  }
+
+  /// The session document under `families/{id}/sessions/{sessionId}`.
+  Map<String, dynamic> toCloud() {
+    return <String, dynamic>{
+      'babyId': baby,
+      'kind': kind,
+      'startMs': startMs,
+      'endMs': endMs,
+      'updatedAtMs': updatedAtMs,
+      'updatedBy': updatedBy,
     };
   }
 }

@@ -25,9 +25,28 @@ class DuoNapTodayViewModel extends Notifier<DuoNapTodayState> {
   DuoNapTodayState build() {
     final timer = Timer.periodic(_refreshEvery, (_) => refresh());
     ref.onDispose(timer.cancel);
+    _followFamily();
     unawaited(Future<void>.microtask(refresh));
     return const DuoNapTodayState();
   }
+
+  /// Reconnects to the family at start, refreshes when the other phone
+  /// changed something, and says so when a change could not be synced.
+  void _followFamily() {
+    final family = ref.read(duoNapFamilyServiceProvider);
+    final changes = family.remoteChanges.listen((_) => refresh());
+    final errors = family.syncErrors.listen((_) => _showError('SYNC_FAILED'));
+    ref.onDispose(changes.cancel);
+    ref.onDispose(errors.cancel);
+    unawaited(_resume());
+  }
+
+  Future<void> _resume() async {
+    final result = await ref.read(duoNapFamilyServiceProvider).resume();
+    if (result is DuoNapFailure<void>) _showError(result.code);
+  }
+
+  void _showError(String code) => state = state.withError(duoNapErrorText(code));
 
   /// The plan depends on the clock, so it is rebuilt on a timer and after each tap.
   Future<void> refresh() async {
